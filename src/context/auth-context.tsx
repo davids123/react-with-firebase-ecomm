@@ -31,6 +31,7 @@ export const AuthProvider = ({children}:Props) => {
     // the user will be redirect to the home page
     const signOut = () => {
         SignOutUser()
+        sessionStorage.removeItem("loggedInUser");
         setCurrentUser(null)
         navigate('/auth/signin');
     }

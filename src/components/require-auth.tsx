@@ -1,18 +1,16 @@
-import { AuthContext } from "@/context/auth-context";
-import { useContext } from "react";
-import { useLocation,Navigate } from "react-router-dom";
+// import { AuthContext } from "@/context/auth-context";
+// import { useContext } from "react";
+import { Navigate } from "react-router-dom";
 
-
-function RequireAuth({children}:{children:JSX.Element}){
-    const {currentUser} = useContext(AuthContext);
-    let location = useLocation();
-    //console.log(`===Current User======${JSON.stringify(currentUser)}====location=== ${JSON.stringify(location)}====`);
-
-    if(!currentUser){
-        return <Navigate to="/" state={{ from:location }} replace/>
-    }   
-    
-
-    return children;
+interface RequireAuthProps{
+    children:React.ReactNode;
 }
-export default RequireAuth
+
+export default function RequireAuth({children}:RequireAuthProps){   
+
+    console.log("==================current user ================");   
+    const currentUser = JSON.parse(sessionStorage.getItem("loggedInUser") || "{}");
+    console.log('==========current user======');
+    console.log(currentUser);
+    return currentUser?.stsTokenManager?.accessToken !== undefined ? children : <Navigate to="/auth/signin" replace={true} />;
+}

@@ -58,10 +58,11 @@ const SignIn = () => {
             const { email, password } = data;
             const userCredential = await signInUser(email, password);
             toast({
-                title:'',
-                description:JSON.stringify(data)
+                title:'Signin Successfully',
+                description:'Welcome to Dashboard'
             });
             if (userCredential) {
+                sessionStorage.setItem("loggedInUser",JSON.stringify(userCredential.user));
                 defaultValues
                 navigate('/');
             }
