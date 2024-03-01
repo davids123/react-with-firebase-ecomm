@@ -1,12 +1,12 @@
 
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useContext, useEffect, useState } from 'react';
 import routes from './routes'
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import SignIn from './pages/Authentication/SignIn';
 import SignUp from './pages/Authentication/SignUp';
 import Ecommerce from './pages/Dashboard/Ecommerce';
 import { Toaster } from "@/components/ui/toaster";
-//import { AuthContext } from './context/auth-context';
+import { AuthContext } from './context/auth-context';
 import RequireAuth from '@/components/require-auth';
 import AuthActions from '@/components/auth-actions';
 import AuthUserActions from './pages/Authentication/AuthUserActions';
@@ -16,30 +16,24 @@ import Spinner from './components/Spinner';
 
 
 const DefaultLayout = lazy(()=>import('./layout/DefaultLayout'));
+
+
 export default function App() {
-  const [loading,setLoading] = useState<boolean>(true);
+  const [loading,setLoading] = useState<boolean>(false);
+  const { currentUser } = useContext(AuthContext)
+  const navigate = useNavigate();
+  // NOTE: console log for testing purposes
+  console.log('User:', !!currentUser);
   
-  
-  useEffect(()=>{
-    const getUser = async()=>{
-      try{
-        const user = JSON.parse(await sessionStorage.getItem("loggedInUser") || "{}");
-        //console.log(user);
-        if(user){
-          await sessionStorage.setItem("loggedInUser",JSON.stringify(user));
-        }
-      }catch(error){
-        console.log(error);
-      }
-    }
-    return ()=>{
-      getUser();
+  useEffect(() => {
+    if (currentUser) {
+      setLoading(true);
+      navigate('/')
       setTimeout(()=>{
         setLoading(false);
-      },300);
-    }    
-    
-  },[]);
+      },1000)
+    }
+  }, [currentUser])
 
   return loading ? (
     <Spinner />

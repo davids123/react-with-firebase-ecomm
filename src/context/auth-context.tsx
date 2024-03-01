@@ -4,7 +4,7 @@ import { ReactNode, createContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
-    children:ReactNode
+    children?:ReactNode
 }
 
 export const AuthContext = createContext({
@@ -30,8 +30,7 @@ export const AuthProvider = ({children}:Props) => {
     // As soon as setting the current user to null
     // the user will be redirect to the home page
     const signOut = () => {
-        SignOutUser()
-        sessionStorage.removeItem("loggedInUser");
+        SignOutUser()        
         setCurrentUser(null)
         navigate('/auth/signin');
     }

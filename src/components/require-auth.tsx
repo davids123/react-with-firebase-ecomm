@@ -1,16 +1,17 @@
-// import { AuthContext } from "@/context/auth-context";
-// import { useContext } from "react";
-import { Navigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../context/auth-context";
+import { Navigate, useLocation } from "react-router-dom";
 
-interface RequireAuthProps{
-    children:React.ReactNode;
+export default function RequireAuth({ children }: { children:JSX.Element }) {
+  const { currentUser } = useContext(AuthContext)
+  let location = useLocation()
+
+  if (!currentUser) {
+    // Redirect the user to the home page.
+    // Please! Close the mustache {{}}
+    return <Navigate to="/auth/signin" state={ { from: location } } replace />;
+  }
+
+  return children;
 }
 
-export default function RequireAuth({children}:RequireAuthProps){   
-
-    console.log("==================current user ================");   
-    const currentUser = JSON.parse(sessionStorage.getItem("loggedInUser") || "{}");
-    console.log('==========current user======');
-    console.log(currentUser);
-    return currentUser?.stsTokenManager?.accessToken !== undefined ? children : <Navigate to="/auth/signin" replace={true} />;
-}
