@@ -26,21 +26,23 @@ import { useNavigate } from "react-router-dom";
 
 export default function Brand(){
     const navigate = useNavigate();
-    const [loading,setLoading] = useState<boolean>(true);    
+    const [loading,setLoading] = useState<boolean>(false);    
     //const { brands } = useContext(ProductsContext);
     const [brands,setBrands] = useState<any>([]);    
     
     useEffect(()=>{
         const getTableData = async()=>{
+            setLoading(true)
             const data = await getBrands();
             //const { brands } = useContext(ProductsContext); 
             setBrands(data)
-            setTimeout(()=>{        
-                setLoading(false);        
-            },1000);
+            
         }
         return()=>{
-            getTableData(); 
+            getTableData();
+            setTimeout(()=>{        
+                setLoading(false);        
+            },300); 
         }
     },[]);
     

@@ -24,7 +24,7 @@ import { getProducts } from '@/utils/firebase';
 
 const Products = () => {
     const navigate = useNavigate();
-    const [loading,setLoading] = useState(true);
+    const [loading,setLoading] = useState(false);
     // const { products } = useContext(ProductsContext);
     const[products,setProducts] = useState<any>([]);
     // const {data:prodyctData,} = useProductListQuery();
@@ -40,14 +40,16 @@ const Products = () => {
     //console.log(products);
     useEffect(()=>{
       const getProductData = async() =>{
+        setLoading(true);
         const getData = await getProducts();
         setProducts(getData)
-        setTimeout(()=>{
-          setLoading(false)
-        },1000);
+        
       }
       return ()=>{
         getProductData();
+        setTimeout(()=>{
+          setLoading(false)
+        },300);
       }
       
     },[]);

@@ -65,7 +65,7 @@ type ProductDataProps = {
 
 const EditProduct = () => {
     const fileRef = useRef(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const { toast } = useToast()
     const [fileUpload, setFileUpload] = useState<FileList | null>(null);
     const [disabled, setDisabled] = useState(false);
@@ -153,6 +153,7 @@ const EditProduct = () => {
                     // const ref = await getDoc(doc(db,"products",id));
                     // //const product  = useFirestore
                     // console.log(ref.data());
+                    setLoading(true);
                     const product = await getProduct(id);
                     console.log(product);
 
@@ -165,14 +166,15 @@ const EditProduct = () => {
                     setValue("category", product?.category);
                     setValue("qty", product?.qty);
                     setValue("sizes", product?.sizes);
-                    setTimeout(()=>{
-                        setLoading(false);
-                    },1000)
+                    
                     
                 }
             }
             return () => {
                 getProductData();
+                setTimeout(()=>{
+                    setLoading(false);
+                },300)
             }
         
 
