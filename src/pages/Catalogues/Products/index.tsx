@@ -40,15 +40,19 @@ const Products = () => {
     //console.log(products);
     useEffect(()=>{
       const getProductData = async() =>{
-        setLoading(true);
-        const getData = await getProducts();
-        setProducts(getData)
+        try{
+          setLoading(true);
+          const getData = await getProducts();
+          setProducts(getData);
+        }catch(error:any){
+          console.log(error.message);
+        }
         
       }
       return ()=>{
         getProductData();
         setTimeout(()=>{
-          setLoading(false)
+          setLoading(false);
         },300);
       }
       
