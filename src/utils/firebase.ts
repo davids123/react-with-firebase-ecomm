@@ -35,6 +35,13 @@ const storage = getStorage(app);
 // Initialize Firestore Database
 export const db = getFirestore(app);
 
+
+/**
+ * 
+ * 
+ * ++++++++++++++++++++++++++++++++++++++++++++++ Product Section Query Start ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ */
+
 type FormFields = {
     title:string,
     price:number,
@@ -45,25 +52,21 @@ type FormFields = {
     category:string,
     userId:string | undefined,
     slug?:string,
-    images?:[{urls:string;}],
-    colour?:[
-        {
-            colorId:string,
-            title:string,
-            value:string,
-        }
-    ],
-    tags?:[{tag:string;}],
-    ratings?:[
-        {
-            userId:string,
-            thumbnail:string,
-            message:string,
-            rating:number,
-        }
-    ],
+    images?:{urls:string;}[],
+    colour?:{
+        colorId:string,
+        title:string,
+        value:string,
+    }[],
+    tags?:{tag:string;}[],
+    ratings?:{
+        userId:string,
+        thumbnail:string,
+        message:string,
+        rating:number,
+    }[],
     rating?:number,
-    sizes?:[{size:string;}],
+    sizes?:{size:string;}[],
     storeId?:string,
 }
 
@@ -191,3 +194,127 @@ export const updateProduct = async() =>{
 export const deleteProduct = async(id:string):Promise<void> => {
     console.log(id) ;
 }
+
+/**
+ * 
+ * 
+ * ++++++++++++++++++++++++++++++++++++++++++++++ Product Section Query End ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ */
+
+/**
+ * 
+ * 
+ * ++++++++++++++++++++++++++++++++++++++++++++++ Brand Section Query Start ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ */
+
+
+/**
+ * This prosses id brand collection in firebase
+ * create,update delete and patch of brand
+ * @returns all brand query
+ */
+
+type BrandFormField = {
+    title:string;
+    slug:string;
+    description?:string;
+}
+
+export const uploadBrand = async(
+    formFields:BrandFormField,
+    file:Blob | ArrayBuffer,
+    fileName:string
+)=>{
+    try{
+        const {
+            title,
+            slug,
+            description,
+           
+        } = formFields;
+        //upload image
+        const imageRef = ref(storage,`images/${fileName}`);
+        const uploadImage = await uploadBytes(imageRef,file);
+
+        //Create file metadata.
+        const newMetadata = {
+            cacheContrrol:'public,max-age=2629800000', //1 month
+            contentType:uploadImage.metadata.contentType
+        }
+
+        await updateMetadata(imageRef,newMetadata);
+
+        //get the image url.
+        const publicImageUrl = await getDownloadURL(imageRef)
+
+        const brandData = {
+            title:title,
+            slug:slug,
+            description:description,
+            thumbnail:publicImageUrl,            
+            created_at:serverTimestamp(),
+            updated_at:serverTimestamp()
+        }
+
+        // Add the product to the cups collection
+        // Remember that we're selling imaginary cups.
+
+        const brandRef = await addDoc(collection(db,"brands"),brandData);
+
+        //Add the cup id to the document refrence.
+        await updateDoc(brandRef,{
+            id:brandRef.id
+        });
+        return brandRef.id;
+    }catch(error){
+        console.log(error)
+    }
+
+}
+
+
+/**
+ * Reterive all documents in a collection and 
+ * convert it into an array of brands.
+ * @return the brand array
+ */
+
+export const getBrands = async():Promise<DocumentData[]> => {
+    const brandRef = await getDocs(collection(db,"brands"));
+    const brandsMap = brandRef.docs.map(doc=> doc.data());
+    
+    return brandsMap;
+}
+
+
+/**
+ * Reterive all documents in a collection and 
+ * convert it into an object of products.
+ * @return the single product 
+ */
+
+export const getBrand = async(id:string) => {
+    const brand = await getDoc(doc(db,"brands",id));    
+    return brand.data();
+}
+
+export const updateBrand = async({id,data}:{id:string,data:BrandFormField}) =>{
+    try{
+        const updatedData =  await updateDoc(doc(db, "brands", id), data);
+        return updatedData;
+    }catch(error){
+        console.log(error)
+    }
+}
+
+export const deleteBrand = async(id:string):Promise<void> => {
+    console.log(id) ;
+}
+
+
+
+/**
+ * 
+ * 
+ * ++++++++++++++++++++++++++++++++++++++++++++++ Brand Section Query End ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ */

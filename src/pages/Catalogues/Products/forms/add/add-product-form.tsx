@@ -1,381 +1,357 @@
-import { useEffect, useState } from 'react'
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useFieldArray, useForm } from "react-hook-form"
-import * as z from "zod"
-
-import { cn } from "@/lib/utils"
+import { useContext, useRef, useState } from 'react'
+import { useForm, useFieldArray,SubmitHandler } from "react-hook-form";
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+// import {
+//   Form,
+//   FormControl,
+//   FormDescription,
+//   FormField,
+//   FormItem,
+//   FormLabel,
+//   FormMessage,
+// } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/components/ui/use-toast"
-import { Link, useNavigate } from "react-router-dom";
-import { useBrandListQuery } from '@/redux/services/brandService'
-import { useCategoryListQuery } from '@/redux/services/categoryService'
-import { useCreateProductMutation } from '@/redux/services/productService'
+// import { toast } from "@/components/ui/use-toast"
+// import {  useNavigate } from "react-router-dom";
+import { 
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 
-
-const productFormSchema = z.object({
-  title: z.string()
-    .min(5, {message: "Title must be at least 5 characters.",})
-    .max(300, {message: "Title must not be longer than 300 characters.",}),
-  category: z.string({required_error: "Please select an category to display.",}),
-  brand: z.string({required_error: "Please select an brand to display.",}),
-  description: z.string(),
-  price:z.coerce.number().int().gte(1),
-  quantity:z.coerce.number().int(),
-  sold:z.coerce.number().int(),
-  thumbnail:z.string(),
-  images: z
-    .array(
-      z.object({
-        url: z.string().url({ message: "Please enter a valid URL." }),
-      })
-    )
-    .optional(),
-})
-
-type ProductFormValues = z.infer<typeof productFormSchema>
+import { AuthContext } from '@/context/auth-context';
+import { ProductsContext } from '@/context/products-context';
+import { getProducts, uploadProduct } from '@/utils/firebase';
 
 
 
 
+
+
+
+
+
+type FormFields = {
+  title:string;
+  price:number;
+  selling_price:number;
+  description:string;
+  sku:string;
+  brand:string;
+  category:string;
+  userId:string | undefined;
+  slug?:string;
+  images: {urls: string;}[] ;
+  colour?:{
+        colorId:string,
+        title:string,
+        value:string,
+  }[];
+  tags?:{
+    tag:string;
+  }[];
+  ratings?:{
+    userId:string,
+    thumbnail:string,
+    message:string,
+    rating:number,
+  }[];
+  rating?:number;
+  sizes?:{
+    size:string;
+  }[];
+  storeId?:string;
+};
 
 
 
 
 const AddProductForm = () => {
-  //Fatching data
-    const navigate = useNavigate();
-    //const [product,setProduct] = useState<any>({});
-    const [categories,setCategories] = useState<any>([]);
-    const [brands,setBrands] = useState<any>([]);
+    const fileRef = useRef(null);
+    //const navigate = useNavigate();
+    const {currentUser} = useContext(AuthContext);
+    const [disabled, setDisabled] = useState(false);
+    const { setProducts } = useContext(ProductsContext);
+    const [fileUpload, setFileUpload] = useState<FileList | null>(null)
+    const {
+      register,
+      control,
+      handleSubmit,
+      formState: { errors }
+    } = useForm<FormFields>({
+      defaultValues: {
+        title:"",
+        price:0,
+        selling_price:0,
+        description:'',
+        sku:'',
+        brand:'',
+        category:'',
+        slug:'',
+        images: [{ urls:""}],
+        colour: [{ 
+          colorId:'',
+          title:'',
+          value:'',
+        }],
+        tags:[{tag:''}],
+        ratings:[{
+          userId:'',
+          thumbnail:'',
+          message:'',
+          rating:0
+        }],
+        rating:0,
+        sizes:[{  size:'' }],
+        storeId:''
+
+      },
+      mode: "onBlur"
+    });
+
+    const { fields, append, remove } = useFieldArray({
+      name: "images",
+      control
+    });
     
-    //const {data:productData,isLoading:isProductLoading,error:productError} = useSingleProductQuery(id!);
-    const {data:categoryData,error:categoryError} = useCategoryListQuery();
-    const {data:brandData,error:brandError} =useBrandListQuery();
-    const [
-      createProduct,
-      {
-        data:createProductData,        
-        error:createProductError,
+  
+    const onSubmit:SubmitHandler<FormFields> = async(data)=>{
+      data.userId = currentUser?.uid;
+      console.log(data);
+      setDisabled(true);
+      if(fileUpload){
+            const inputFile = fileRef.current as HTMLInputElement | null;
+            const res = await uploadProduct(
+                data,
+                fileUpload[0],
+                fileUpload[0].name
+            );
+
+            if(res && inputFile){
+                setDisabled(false);
+                setFileUpload(null);
+
+
+                // Context
+                const products = await getProducts();
+                if (products) {
+                    setProducts(products)
+                }
+            }
       }
-    ] = useCreateProductMutation();
-    
+    };
 
-
-    useEffect(()=>{
-      if(categoryError){
-        console.log(categoryError);
-      }
-      if(brandError){
-        console.log(brandError);
-      }
-      
-    },[categoryError,brandError]);
-    useEffect(()=>{
-      if(brandData){
-        setBrands(brandData);
-      }
-      if(categoryData){
-        setCategories(categoryData);
-      }
-      
-    },[brandData,categoryData]);
-
-    //console.log(productFormSchema.safeParse(product?.title));
-    
-  // Product Form
-  // This can come from your database or API.
-  const defaultValues: Partial<ProductFormValues> = {
-    title:'',
-    category:'',
-    brand:'',
-    description:'',
-    price:0,
-    quantity:0,
-    sold:0,
-    thumbnail:'',
-    images: [
-      { url: "https://shadcn.com" },
-      { url: "http://twitter.com/shadcn" },
-    ],
-  };
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productFormSchema),
-    defaultValues,
-    mode: "onChange",
-  })
-
-  const { fields, append } = useFieldArray({
-    name: "images",
-    control: form.control,
-  })
-
-  async function onSubmit(data: ProductFormValues) {
-    try{
-      
-      await createProduct(data);
-      // toast({
-      //   title: "You submitted the following values:",
-      //   description: (
-      //     <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-      //       <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-      //     </pre>
-      //   ),
-      // })
-    }catch(err){
-      console.error(err);
-    }
-  }
-
-  useEffect(()=>{
-    if(createProductError){
-      console.log(createProductError);
-    }
-    if(createProductData){
-      console.log(createProductData);
-      setTimeout(()=>{
-        toast({
-          title: "Product created successfully !",          
-        })
-        navigate('/catalogues/products');
-      },300);
-    }
-  },[createProductData,createProductError]);
+  
   
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter product title ..." {...field} /> 
-                
-              </FormControl>
-              <FormDescription>
-                This is your public display title.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a verified category to display" />
-                  </SelectTrigger>
-                </FormControl>
+      <>
+        <form onSubmit={handleSubmit(onSubmit)}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Information</CardTitle>
+            <CardDescription>
+              What area are you having problems with?
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="area">Product Title</Label>
+              <Textarea
+                {...register("title")}                
+                placeholder="Please enter product title."
+                rows={3}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="area">Brand</Label>
+              <select defaultValue="" {...register("brand")}>
+                {/* <SelectTrigger id="area">
+                  <SelectValue placeholder="Select"/>
+                </SelectTrigger>
                 <SelectContent>
-                  {categories.map((item:any,index:any)=>{
-                    return(
-                      <SelectItem value={item?.title} key={index}>{item?.title}</SelectItem>
-                    )
-                  })}                 
-                  
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                You can manage category in your{" "}
-                <Link to="/examples/forms"> settings</Link>.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="brand"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Brand</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a verified brand to display" />
-                  </SelectTrigger>
-                </FormControl>
+                  <SelectItem value="Apple">Apple</SelectItem>
+                  <SelectItem value="Acer">Acer</SelectItem>
+                  <SelectItem value="Hp">Hp</SelectItem>
+                  <SelectItem value="Dell">Dell</SelectItem>
+                  <SelectItem value="Lanvo">Lenvo</SelectItem>
+                </SelectContent> */}
+                <option value="Dell">Dell</option>
+                <option value="Hp">Hp</option>
+                <option value="Apple">Apple</option>
+              </select>
+            </div>
+            
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="area">Slug Url</Label>
+              <Input id="subject" type='text' placeholder="Enter slug " {...register("slug")} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="area">Category</Label>
+              <select defaultValue="billing" {...register("category")}>
+                {/* <SelectTrigger id="area">
+                  <SelectValue placeholder="Select"/>
+                </SelectTrigger>
                 <SelectContent>
-                  {brands.map((item:any,index:any)=>{
-                    return(
-                      <SelectItem value={item?.title} key={index}>{item?.title}</SelectItem>
-                    )
-                  })}                  
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                You can manage brand in your{" "}
-                <Link to="/examples/forms"> settings</Link>.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descriptions</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Enter description ..."
-                  className="h-full min-h-[200px] lg:min-h-[300px] xl:min-h-[300px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                You can <span>@mention</span> other users and organizations to
-                link to them.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="price"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Price</FormLabel>
-              <FormControl>
-                <Input  placeholder="Enter price ..." {...field} />
-                {/* <Textarea
-                  placeholder="Enter product title..."
-                  className="resize-none"
-                  {...field}
-                /> */}
-              </FormControl>
-              <FormDescription>
-                This is your public display price.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="quantity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Quantity</FormLabel>
-              <FormControl>
-                <Input  placeholder="Enter quantity ..." {...field} />
-                {/* <Textarea
-                  placeholder="Enter product title..."
-                  className="resize-none"
-                  {...field}
-                /> */}
-              </FormControl>
-              <FormDescription>
-                This is your private display price.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="sold"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Sold</FormLabel>
-              <FormControl>
-                <Input  placeholder="Enter sold ..." {...field} />
-                {/* <Textarea
-                  placeholder="Enter product title..."
-                  className="resize-none"
-                  {...field}
-                /> */}
-              </FormControl>
-              <FormDescription>
-                This is your private display price.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="thumbnail"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Single Image</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter image url http://example.com .." {...field} />
-                {/* <Textarea
-                  placeholder="Enter product title..."
-                  className="resize-none"
-                  {...field}
-                /> */}
-              </FormControl>
-              <FormDescription>
-                Please  thumbnail image url in your product.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div>
-          {fields.map((field, index) => (
-            <FormField
-              control={form.control}
-              key={field.id}
-              name={`images.${index}.url`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={cn(index !== 0 && "sr-only")}>
-                    Images
-                  </FormLabel>
-                  <FormDescription className={cn(index !== 0 && "sr-only")}>
-                    Add image to your products, blog, or social media profiles.
-                  </FormDescription>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                  <SelectItem value="Electronics">Electronics</SelectItem>
+                  <SelectItem value="Cloath">Cloath</SelectItem>
+                  <SelectItem value="Books">Books</SelectItem>
+                  <SelectItem value="Toys">Toys</SelectItem>
+                  <SelectItem value="Computers">Computers</SelectItem>
+                </SelectContent> */}
+                <option value="Electronics">Electronics</option>
+                <option value="Books">Books</option>
+                <option value="Computer">Computer</option>
+              </select>
+            </div>
+            
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="area">Max Price</Label>
+              <Input id="subject" type='text' placeholder="Enter Max Price " {...register("price")} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="area">Discount Price</Label>
+              <Input id="subject" type='text' placeholder="Enter Discount Price " {...register("selling_price")}/>
+            </div>
+            
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Short Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Please include all information relevant to your issue."
+              {...register("description")}
             />
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={() => append({ url: "" })}
-          >
-            Add URL
-          </Button>
-        </div>
-        <Button type="submit">Save Change</Button>
-      </form>
-    </Form>
+          </div>
+          {/* <div className="grid gap-2">
+            <Label htmlFor="description">Long Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Please include all information relevant to your issue."
+            />
+          </div> */}
+          {/* <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="area">User</Label>
+              <Select defaultValue="billing">
+                <SelectTrigger id="area">
+                  <SelectValue placeholder="Select"  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="team">Team</SelectItem>
+                  <SelectItem value="billing">Billing</SelectItem>
+                  <SelectItem value="account">Account</SelectItem>
+                  <SelectItem value="deployments">Deployments</SelectItem>
+                  <SelectItem value="support">Support</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="area">In Stock Total</Label>
+              <Select defaultValue="billing">
+                <SelectTrigger id="area">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="team">Team</SelectItem>
+                  <SelectItem value="billing">Billing</SelectItem>
+                  <SelectItem value="account">Account</SelectItem>
+                  <SelectItem value="deployments">Deployments</SelectItem>
+                  <SelectItem value="support">Support</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+          </div> */}
+          <div className="grid gap-2">
+            <h4>Product Media</h4>
+            
+          </div>
+          {/* <Separator className="my-6"/> */}
+          <div className="grid gap-2">
+            <Label htmlFor="subject">Media Url</Label>
+            <Input
+              ref={fileRef}             
+              type='file'
+              name="image"
+              accept=".png, .jpg, .jpeg"
+              disabled={disabled}
+              onChange={(e) => setFileUpload(e.target.files)}
+              required 
+              placeholder="Upload image File"  
+              
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="subject">Medias Urls</Label>           
+            {fields.map((field, index) => {
+                return(
+                  <div  key={field.id}>
+                    <Input  
+                      type='text'
+                      placeholder="urls" 
+                      {...register(`images.${index}.urls` as const, {
+                        required: true
+                      })}
+                      className={errors?.images?.[index]?.urls ? "error" : ""}
+                    />
+                  </div>
+                )
+            })}
+            <div className="justify-start ">             
+              <Button                
+                type='button'
+                onClick={() =>
+                  append({
+                    urls: "",                  
+                  })
+                }
+              >Add Urls</Button>
+              <Button
+                variant="ghost" 
+                type='button'
+                onClick={() =>
+                  remove(0)
+                }
+              >Remove Urls</Button>
+            </div>
+          </div>
+            {/* <div className="grid gap-2">
+              <Label htmlFor="subject">Medias Url</Label>
+              <Input 
+                id="subject" 
+                type='text'  
+                placeholder="name"
+              />
+            </div> */}
+                    
+
+          </CardContent>
+          <CardFooter className="justify-between space-x-2">
+            <Button variant="ghost">Cancel</Button>
+            <Button>Save</Button>
+          </CardFooter>
+
+        </Card>
+        </form>
+      </>
   )
 }
 

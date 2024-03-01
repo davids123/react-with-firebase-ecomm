@@ -28,11 +28,13 @@ export default function App() {
     
     if(currentUser){
       //setLoading(true);
-      navigate(location);
-      
+      setTimeout(()=>{
+        navigate(location);
+        setLoading(false)
+      },300);            
       
     }
-    setTimeout(()=>setLoading(false),1000);
+    
 
   },[currentUser])
 

@@ -15,6 +15,14 @@ const SettingsAppearancePage = lazy(()=> import('../pages/Settings/forms/appeara
 const SettingsDisplayPage = lazy(()=> import('../pages/Settings/forms/display'));
 const SettingsNotificationsPage = lazy(()=> import('../pages/Settings/forms/notifications'));
 const MediaFiles = lazy(()=> import('../pages/media'))
+//Category
+const Category = lazy( () => import('../pages/Catalogues/category'));
+
+//Brand
+const Brand = lazy( () => import('../pages/Catalogues/brand'));
+const AddBrand = lazy( () => import('../pages/Catalogues/brand/add-brand'));
+const EditBrand = lazy( () => import('../pages/Catalogues/brand/edit-brand'));
+
 
 const coreRoutes = [
     
@@ -77,6 +85,27 @@ const coreRoutes = [
       path: '/catalogues/inventaries',
       title: 'Inventaries',
       component: Inventaries,
+    },
+    {
+      path: '/catalogues/categories',
+      title: 'Category',
+      component: Category,
+    },
+
+    {
+      path: '/catalogues/brands',
+      title: 'Brand',
+      component: Brand,
+    },
+    {
+      path: '/catalogues/brand/add-brand',
+      title: 'AddBrand',
+      component: AddBrand,
+    },
+    {
+      path: '/catalogues/brand/edit-brand/:id',
+      title: 'EditBrand',
+      component: EditBrand,
     },
     {
       path: '/media',

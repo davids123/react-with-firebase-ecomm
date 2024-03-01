@@ -1,12 +1,13 @@
-import  { useContext, useEffect, useState } from 'react';
+import  {  useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserNav } from '@/components/user-nav';
 
-// import { DataTable } from './DataTable/data-table';
-// import {  columns } from "./DataTable/columns";
+import { DataTable } from './DataTable/data-table';
+import {  columns } from "./DataTable/columns";
 import { Button } from '@/components/ui/button';
-import { ProductsContext } from '@/context/products-context';
+
 import Spinner from '@/components/Spinner';
+import { getProducts } from '@/utils/firebase';
 
 // async function getData(): Promise<Payment[]> {
 //   // Fetch data from your API here.
@@ -24,8 +25,8 @@ import Spinner from '@/components/Spinner';
 const Products = () => {
     const navigate = useNavigate();
     const [loading,setLoading] = useState(true);
-    const { products } = useContext(ProductsContext);
-    // const[products,setProducts] = useState<any>([]);
+    // const { products } = useContext(ProductsContext);
+    const[products,setProducts] = useState<any>([]);
     // const {data:prodyctData,} = useProductListQuery();
     
     
@@ -36,12 +37,20 @@ const Products = () => {
       
     // },[prodyctData])
 
-    console.log(products);
+    //console.log(products);
     useEffect(()=>{
-      setTimeout(()=>{
-        setLoading(false)
-      },1000);
-    },[products])
+      const getProductData = async() =>{
+        const getData = await getProducts();
+        setProducts(getData)
+        setTimeout(()=>{
+          setLoading(false)
+        },1000);
+      }
+      return ()=>{
+        getProductData();
+      }
+      
+    },[]);
 
   
     
@@ -65,7 +74,7 @@ const Products = () => {
                 <UserNav />
               </div>
             </div> 
-            {/* <DataTable columns={columns} data={products} /> */}
+            <DataTable columns={columns} data={products} />
           </div>
         }
           

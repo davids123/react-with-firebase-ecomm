@@ -1,6 +1,10 @@
 import { ColumnDef } from "@tanstack/react-table";
 import {  MoreHorizontal } from "lucide-react";
-
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -95,7 +99,18 @@ export const columns: ColumnDef<Product>[] = [
     
     {
         accessorKey: "thumbnail",
-        header: "Image",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Image" />
+        ),
+        cell: ({ row }) => {
+          const payment = row.original;
+          return(
+            <Avatar>
+              <AvatarImage src={payment.thumbnail} alt="@shadcn" />
+              <AvatarFallback>CN</AvatarFallback>
+            </Avatar>
+          )
+        }
     },
     {
         id:"actions",

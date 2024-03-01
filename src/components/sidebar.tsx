@@ -65,7 +65,7 @@ export function Sidebar({ className }: SidebarProps) {
             Catalogue
           </h2>
           <div className="space-y-1">
-            <Button variant="ghost" className="w-full justify-start">
+            <Button variant="ghost" className="w-full justify-start" onClick={()=>navigate('/catalogues/products')}>
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -82,6 +82,42 @@ export function Sidebar({ className }: SidebarProps) {
                 <path d="M4 4v16" />
               </svg>
               Products
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" onClick={()=>navigate('/catalogues/brands')}>
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mr-2 h-4 w-4"
+              >
+                <path d="m16 6 4 14" />
+                <path d="M12 6v14" />
+                <path d="M8 8v12" />
+                <path d="M4 4v16" />
+              </svg>
+              Brands
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" onClick={()=>navigate('/catalogues/categories')}>
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mr-2 h-4 w-4"
+              >
+                <path d="m16 6 4 14" />
+                <path d="M12 6v14" />
+                <path d="M8 8v12" />
+                <path d="M4 4v16" />
+              </svg>
+              Categories
             </Button>
             <Button variant="ghost" className="w-full justify-start" onClick={()=>navigate('/catalogues/inventaries')}>
               <svg 
